@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+	<script src="js/jquery-1.11.2.min.js"></script>
+	<script type="text/javascript" src="js/paper-full.min.js"></script>
+	<script type="text/paperscript" canvas="myCanvas2">
+
+		var audioCtx;
+		var video = document.getElementById('video');
+		var canvas = document.getElementById('myCanvas1');
+		var width = $(window).width();
+		var height = $(window).height();		
+		var detection = {};
+		var xParts = 60, yParts = 40;
+		var blocksNum = xParts * yParts;
+		var cloudShowed = false;
+		var xSide = Math.floor(width/xParts);
+		var ySide = Math.floor(height/yParts);
+		var destination;
+
+		function getWebcam(){
+			audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+			navigator.getMedia =  navigator.getUserMedia ||
+        navigator.webkitGetUserMedia ||
+        navigator.mozGetUserMedia ||
+        navigator.msGetUserMedia;
+
+      if (navigator.getMedia) {
+	   		navigator.getMedia (
+		   		{
+		   			video: true
+		   		},
+		 			function(localMediaStream){
+	   				video.src = window.URL.createObjectURL(localMediaStream);
+	   				video.onloadedmetadata = function(e) {
+				      setTimeout(function(){
+				      	view.on('frame', frameHandler);
+				      },500);
+				    };
+					}, 
+			   	function(e){
+			   		console.log(e);
+			   	}
+				);
+			}
+		}
+
+		function frameHandler(event){
+			var c = canvas.getContext('2d');
+			c.save();
+			c.scale(-1,1);
+		  c.drawImage(video,-width,0,width,height);
+		  c.restore();
+		  var currentFrame = c.getImageData(0,0,width,height);
+		    	
+		  if(!detection.framesArray){
+		   	detection.framesArray = [];
+		    detection.framesArray.push(currentFrame); 
+		  }
+		  else{	
+		    if (detection.framesArray[1] != null) {
+		    	detection.framesArray.splice(0,1);
+		    }
+		    
+		    detection.framesArray.push(currentFrame);
+		   	detectMotion(detection.framesArray[0],detection.framesArray[1]);
+		  }
+
+		  frameHandler;
+		}
+
+		
+
+		// Detect motion
+
+		function detectMotion(previous, current){
+			
+			var changed = [];
+			for(var r = 0; r < yParts; r++){
+				for(var c = 0; c < xParts; c++){
+					var x = (c * xSide) + Math.floor(xSide/2);
+					var y = (r * ySide) + Math.floor(ySide/2);
+					var postition = (previous.width * 4) * y + x * 4;
+
+					var dr = Math.abs(previous.data[postition]-current.data[postition]);
+					var dg = Math.abs(previous.data[postition+1]-current.data[postition+1]);
+					var db = Math.abs(previous.data[postition+2]-current.data[postition+2]);
+
+					// motion detected
+					if((dr+dg+db) >= 80 ){
+						changed.push([c,r]);
+					}			
+				}
+			}
+
+			if (changed.length != 0) {
+				var cSum = 0, changedNum = changed.length;
+
+				for (var i = 0; i < changedNum; i++) {
+					cSum += changed[i][0];
+				}
+				var cAve = Math.floor(cSum/changedNum);
+				destination = new Point(cAve * xSide + Math.floor(xSide/2),100);
+			}
+			moveCloud(destination);
+			
+		}
+
+		function	moveCloud(destination){
+			
+			if(destination != null){
+				var vector = destination - cloud.position;
+				
+				cloud.position += vector/30;
+			}
+			
+		}
+	/*
+		function getRandom(min, max) {
+		    return Math.random() * (max - min) + min;
+		}
+
+		function twoSideRandom(numerator,denominator) {
+			if(getRandom(0, denominator) <= numerator) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+	*/
+		canvas.width = width;
+		canvas.height = height;
+
+		var cloud = new Raster('cloud');
+		cloud.position = new Point(500, 100);
+
+		getWebcam();
+
+	</script>	
+
+	<style>
+		body,html {
+			margin:0;
+			padding: 0;
+		}
+		video {			
+			display: none;
+		}
+		canvas {
+			position: absolute;
+			top: 0;
+			left: 0;			
+		}
+		#myCanvas2{
+			height:100%;
+			width:100%;
+		}
+		img {
+			display: none;
+		}
+	</style>
+</head>
+<body>
+	<video id="video" autoplay></video>
+	<canvas id="myCanvas1"></canvas>
+	<canvas id="myCanvas2"></canvas>
+	<img src="cloud.gif" id="cloud">	
+</html>
