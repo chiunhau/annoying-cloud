@@ -24,8 +24,8 @@
 
 		function getWebcam(){
 			audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-			navigator.getMedia =  navigator.getUserMedia ||
-        navigator.webkitGetUserMedia ||
+			navigator.getMedia =  navigator.getUserMedia || 
+				navigator.webkitGetUserMedia ||
         navigator.mozGetUserMedia ||
         navigator.msGetUserMedia;
 
@@ -37,9 +37,7 @@
 		 			function(localMediaStream){
 	   				video.src = window.URL.createObjectURL(localMediaStream);
 	   				video.onloadedmetadata = function(e) {
-				      setTimeout(function(){
 				      	view.on('frame', frameHandler);
-				      },500);
 				    };
 					}, 
 			   	function(e){
@@ -69,11 +67,8 @@
 		    detection.framesArray.push(currentFrame);
 		   	detectMotion(detection.framesArray[0],detection.framesArray[1]);
 		  }
-
 		  frameHandler;
 		}
-
-		
 
 		// Detect motion
 
@@ -91,7 +86,7 @@
 					var db = Math.abs(previous.data[postition+2]-current.data[postition+2]);
 
 					// motion detected
-					if((dr+dg+db) >= 80 ){
+					if((dr+dg+db) >= 100 ){
 						changed.push([c,r]);
 					}			
 				}
@@ -106,16 +101,13 @@
 				var cAve = Math.floor(cSum/changedNum);
 				destination = new Point(cAve * xSide + Math.floor(xSide/2),100);
 			}
-			moveCloud(destination);
-			
+			moveCloud(destination);			
 		}
 
 		function	moveCloud(destination){
-			
 			if(destination != null){
 				var vector = destination - cloud.position;
-				
-				cloud.position += vector/30;
+				cloud.position += vector/20;
 			}
 			
 		}
