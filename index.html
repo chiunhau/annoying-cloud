@@ -9,7 +9,6 @@
 	<script type="text/javascript" src="js/paper-full.min.js"></script>
 	<script type="text/paperscript" canvas="myCanvas2">
 
-		var audioCtx;
 		var video = document.getElementById('video');
 		var canvas = document.getElementById('myCanvas1');
 		var width = $(window).width();
@@ -23,7 +22,6 @@
 		var destination;
 
 		function getWebcam(){
-			audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 			navigator.getMedia =  navigator.getUserMedia || 
 				navigator.webkitGetUserMedia ||
         navigator.mozGetUserMedia ||
